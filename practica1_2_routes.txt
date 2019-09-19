@@ -1,0 +1,107 @@
+Router es una computadora (No es un moden)
+
+3 Modos de Conf
+	Modo Usuario no podemos hacer nada 
+	Usuario Previlijiados TODO
+	Configuracion Global CONF LO QUE QUERAMOS EN LOS DISPOSITIVOS
+Dos tipos de archivos
+	STATUS CONFING  EL chido (guarda la configuración que hemos guardado) si no se encuentra se va al running 
+	RUNNING CONFING	(se borra en cuanto apagamos el dispositivo)
+CAMBIAR MODOS
+	1 enable modo usuario pasar a usuario priviligiado
+	2 router# show running-config ver la configuracion	
+	2 router# configure terminal para pasar configuracion global
+	3 router(config-if) interface fastEthernet 0/0 || fa 0/0
+	4 router(config-if) Prender la interfaz no shutdown , apagar shutdown
+	5 router(config-if) configurar ip del gatway #ip address 192.168.1.126 255.255.255.128
+	6 router(config-if) Interfaz serial exit un usuario hacia atras exit
+	7 router(config) interface serial 0/3/0
+	8 router(config-if) no shutdown
+	9 router(config-if) agregar ip ip add 192.168.1.161 255.255.255.252
+ 	10 router(config-if) interfaz del reloj clock rate 64000
+	11 configurar las ip de las computadoras
+
+-------IPV6--------------------------
+	Router>enable
+	Router#configure terminal
+	Router(config)#ipv6 unicast-routing
+	Router(config)#int fa0/0
+	Router(config-if)#ipv6 address 2001:ACAD:CAFE:DB8::1/64
+	Router(config-if)#no shutdown
+	Router(config-if)#ipv6 address FE80::1 link-local
+	Router(config-if)#exit
+	Router(config)#exit
+
+
+-------SWITCH------------------------
+	1 enable
+	2 configure terminal
+	3 interface VLAN1
+	4 no shutdown
+	5 ip address 
+	6 exit
+	7 ip default-gateway (ip sin mascara/router)
+
+-------Servidor DHCP Manera de solo uno en una red lan--------------------------
+	1 se configura el rooter 
+	2 se configuran los seriales
+	3 se configura los gateway
+	4 poner servidor
+	5 poner ip -gateway and mascara
+	6 servicios DCP prender
+	7 ip empezar y mascara
+
+--------Servidor DHCP en los Routes---------
+	1 en
+	2 config t
+	3 id entificar ip que no deben de ser repartidas (gateway,servidores) y nigun otro dispositivo
+	4 ip dhcp excluded-address ip's no repartidas
+	-> Configurar DHCP 
+	5 ip dhcp pool 'name' (ISEIprueba1)
+	   ->Red
+	6 Router(dhcp-config)#network 'nombre de red'=172.5.0.0 'mascara'=255.255.248.0 
+	   ->Gateway
+	7 Router(dhcp-config)#default-router 'gateway'
+	   -> Resuelve los nombres de dominio(pagina con www.etc...)
+	8 dns-server 8.8.8.8
+	   ->Modo privilegiado
+	9 show dhcp binding
+	10 show ip dhcp server statistics (muestra la informacion presto , caducaron,mensajes mandadoes,etc)
+
+-------DHCP IPV4--------------------------
+	Otorga 
+		ip
+		mask
+		gateway
+		dns
+-------DHCP IPV6 tipos--------------------
+	1)SLAAC
+		EUI-64
+			Otorga 
+				ip
+				Link-local
+	2)DHCP sin estado
+		Toma la ip por medio de Slaac con el proceso EUI-64
+		Toma DNS por el DHCP
+	3)DHCP con estado
+		Le pide todo al DHCP (No funciona en Packet Tracer)
+
+
+-------DHCP IPV6 sin estado----------------
+	Router>enable
+	Router#configure terminal
+	Router(config)#ipv6 unicast-routing
+	Router(config)#int fa0/0
+	Router(config-if)#ipv6 address 2001:ACAD:CAFE:DB8::1/64
+	Router(config-if)#no shutdown
+	Router(config-if)#ipv6 address FE80::1 link-local---No funciona
+	Router(config-if)#exit
+	---DHCP----
+	Router(config)#ipv6 dhcp pool router1500
+	dns-server 'dns-ipv6' (aqui pide el dns del DHCP)
+	---INTERFACE--
+	int fa0/0
+	---Configuracion--
+	ipv6 DHCP server 'router1500' --DHCP
+  	ipv6 nd other-config-flag --Informacion con que va a trabajar con ip metodo slaac
+                      

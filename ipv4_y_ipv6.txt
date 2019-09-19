@@ -1,0 +1,139 @@
+RA>en
+RA#conf t
+RA(config)#router ospf 1
+OSPF process 1 cannot start. There must be at least one "up" IP interface
+RA(config-router)#router-id 1.1.1.1
+RA(config-router)#int g0/0
+RA(config-if)#ip add 172.31.0.1 255.255.254.0 
+RA(config-if)#no sh
+
+%LINK-5-CHANGED: Interface GigabitEthernet0/0, changed state to up
+
+RA(config-if)#int s0/0/0
+RA(config-if)#ip add 172.31.4.1 255.255.255.252
+RA(config-if)#no sh
+
+%LINK-5-CHANGED: Interface Serial0/1/0, changed state to down
+
+Please note that I did not configure S0/1/0, it is supposed to be S0/0/0. 
+Then, just to wrap it up for now, do:
+RA(config-if)#router ospf 1
+RA(config-router)#passive-interface g0/0
+
+Lets go open up our next router, RB. Remember, this is the router that we have to configure for both IPv4 and IPv6, so be careful. Not hard, but just be cautious, messing up here will fail your packet tracer.
+
+RB>en
+RB#conf t
+RB(config)#router ospf 1
+OSPF process 1 cannot start. There must be at least one "up" IP interface
+RB(config-router)#router-id 2.2.2.2
+RB(config-router)#int g0/0
+RB(config-if)#ip add 172.31.2.1 255.255.254.0 
+RB(config-if)#ipv6 address 2001:DB8:1::1/64
+RB(config-if)#no sh
+
+Configure the Serial cables for their respective addresses.
+RB(config-if)#int s0/0/0
+RB(config-if)#ip add 172.31.4.2 255.255.255.252
+RB(config-if)#no sh
+
+RB(config-if)#int s0/0/1
+RB(config-if)#ipv6 add 2001:DB8:2::1/64
+RB(config-if)#no sh
+
+Now, lets add our network commands for OSPF routing.
+
+RB(config-if)#router ospf 1
+RB(config-router)#passive-interface g0/0
+RB(config-router)#network 172.31.2.0 255.255.254.0 area 0
+RB(config-router)#network 172.31.4.0 255.255.255.252 area 0
+
+So, close RB and go back to RA. While doing that, your link-lights for the entire left side of RB should be green. Go into RA and congfigure your OSPF:
+
+RA(config-if)#router ospf 1
+RA(config-router)#passive-interface g0/0
+RA(config-router)#network 172.31.0.0 255.255.254.0 area 0
+RA(config-router)#network 172.31.4.0 255.255.255.252 area 0
+
+You should get one of these after that:
+00:23:22: %OSPF-5-ADJCHG: Process 1, Nbr 2.2.2.2 on Serial0/0/0 from LOADING to FULL, Loading Done
+
+So, close that and go back to RB, it's time to configure the Serial and other connections with IPv6. 
+
+RB(config-router)#int s0/0/1
+RB(config-if)#ipv6 ospf 1 area 0
+% IPv6 routing not enabled
+
+Just like last packet tracer, we have to go configure to allow IPv6. Enter the unicast routing command again.
+RB(config)#ipv6 unicast-routing 
+
+Resume your connetion to the serial interface...
+RB(config)#int s0/0/1
+RB(config-if)#ipv6 ospf 1 area 0
+
+Then, configure OSPF to the IPv6 section of the router including the other interfaces to that router.
+RB(config-if)#ex
+RB(config)#ipv6 router ospf 1
+RB(config-rtr)#router-id 2.2.2.2
+RB(config-rtr)#int g0/0
+RB(config-if)#ipv6 ospf 1 area 0
+RB(config-if)#ipv6 address fe80::1 link-local
+RB(config)#int s0/0/1
+RB(config-if)#no sh
+
+Now, our final router configuration, go to RC and configure like we have done before, though this router is exclusively IPv6.
+RC>en
+RC#conf t
+RC(config)#int g0/0
+RC(config-if)#ipv6 address fe80::3 link-local
+RC(config-if)#ex
+
+RC(config)#ipv6 unicast-routing
+RC(config)#ipv6 router ospf 1
+%OSPFv3-4-NORTRID: OSPFv3 process 1 could not pick a router-id,please configure manually
+RC(config-rtr)#router-id 3.3.3.3
+RC(config-rtr)#int g0/0
+RC(config-if)#ipv6 ospf 1 area 0
+RC(config-if)#int s0/0/0
+RC(config-if)#ipv6 add 2001:DB8:2::2/64
+RC(config-if)#ipv6 ospf 1 area 0
+RC(config-if)#no sh
+RC(config-if)#ipv6 ospf 1 area 0
+RC(config-if)#int g0/0
+RC(config-if)#ipv6 address 2001:DB8:3::1/64
+RC(config-if)#no sh (thank you for the catch! see comments below)
+RC(config-if)#ex
+RC(config)#ipv6 router ospf 1
+RC(config-rtr)#pas
+
+RC(config-rtr)#passive-interface g0/0
+
+So, we've configured our routes fully. You must verify this, perhaps a show command like ospf neighbor. Check your progress, all PC information should not be correct, only everything with the routers.
+
+Finally, we need to do the PCs now. When you check your results, the packet tracer displays the IP address needed for the PCs, the default gateway and other PC information is as follows: 
+
+
+PC-A Configuration
+No IPv6 Configuration Present
+
+IPV4 IP Address: 172.31.1.254
+IPV4 Link Local Address: 255.255.254.0
+IPV4 Default Gateway: 172.31.0.1
+
+PC-B Configuration
+IPV4 IP Address: 172.31.3.254
+IPV4 Subnet Mask: 255.255.254.0
+IPV4 Default Gateway: 173.31.2.1
+
+IPV6 IP Address: 2001:DB8:1::2/64
+IPV6 Link Local Address: FE80::1
+IPV6 Default Gateway: FE80::1
+
+**Thank you to "Daniel" in the comments for correcting the PC address issues.
+
+PC-C Configuration
+No IPv4 Configuration Present
+
+IPV6 IP Address: 2001:DB8:3::2/64
+IPV6 Link Local Address: FE80::1
+IPV6 Default Gateway: FE80::3
